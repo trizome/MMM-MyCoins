@@ -5,7 +5,7 @@ Module.register("MMM-MyCoins", {
     // updateInterval: 1
   },
 
- /* getStyles: function () {
+  /* getStyles: function () {
     return [this.file("css/styles.css")];
   },*/
 
@@ -17,19 +17,20 @@ Module.register("MMM-MyCoins", {
   },
 
   getStyles: function () {
-		return [
-			"MMM-MyCoins.css",
-		];
-	},
+    return ["MMM-MyCoins.css"];
+  },
 
   getDom: function () {
     const list = document.createElement("div");
- if (!this.balance) return list;
-    list.id = 'list';
-   
+    list.id = "list";
+    if (!this.balance) {
+      list.innerText = "loading ...";
+      return list;
+    }
+
     const sign = this.balance >= 0 ? "+" : "-";
     const colorGain = this.balance >= 0 ? "good" : "bad";
-  
+
     const DomObj = [
       {
         title: "BTC : ",
@@ -59,28 +60,85 @@ Module.register("MMM-MyCoins", {
         classe: colorGain,
       },
     ];
-   
+
     DomObj.forEach((line) => {
       const div = document.createElement("div");
       const spanTitle = document.createElement("span");
       spanTitle.innerText = line.title;
       const spanValue = document.createElement("span");
       spanValue.id = line.id;
-      if (line.classe) spanValue.classList.add('balance', line.classe);
+      if (line.classe) spanValue.classList.add("balance", line.classe);
       spanValue.innerText = line.value;
       div.appendChild(spanTitle);
       div.appendChild(spanValue);
       list.appendChild(div);
     });
 
- 
-/*
-   const can = document.createElement("canvas");
+    const can = document.createElement("canvas");
     can.id = "myChart";
     can.width = "350";
     can.height = "180";
+
+    var ctx = can.getContext("2d");
+    const labels = Object.keys(evolPrices.pricesDates).map((key) => key);
+    const data = Object.keys(evolPrices.pricesDates).map(
+      (key) => evolPrices.pricesDates[key]
+    );
+
+    var myChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+            backgroundColor: "rgba(255, 99, 132, 1)",
+            borderColor: "rgba(255, 99, 132, 1)",
+            borderWidth: 2,
+            fill: false,
+          },
+        ],
+      },
+
+      options: {
+        scales: {
+          /*       xAxes: [{
+      ticks: {
+        display: false
+      },
+      gridLines: { 
+        display: false,
+      },
+    }], */
+          /* 
+    yAxes: [{
+      ticks: {
+        display: false
+      },
+      gridLines: { 
+        display: false,
+      },
+    }], */
+        },
+        responsive: false,
+        title: {
+          display: true,
+          text: "BTC USD - last days",
+        },
+        tooltips: {
+          mode: "index",
+          intersect: false,
+        },
+        hover: {
+          mode: "nearest",
+          intersect: true,
+        },
+        steppedLine: false,
+        legend: { display: false },
+      },
+    });
     list.appendChild(can);
-*/    
+
     return list;
   },
 
@@ -88,9 +146,9 @@ Module.register("MMM-MyCoins", {
     switch (notification) {
       case "DOM_OBJECTS_CREATED":
         this.sendSocketNotification("GET_COINS", {
-            BTCAccount: this.config.BTCAccount,
-            totalInvestissement: this.config.totalInvestissement,
-          });
+          BTCAccount: this.config.BTCAccount,
+          totalInvestissement: this.config.totalInvestissement,
+        });
         setInterval(() => {
           this.sendSocketNotification("GET_COINS", {
             BTCAccount: this.config.BTCAccount,
