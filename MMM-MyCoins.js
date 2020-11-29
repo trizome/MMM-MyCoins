@@ -11,7 +11,6 @@ Module.register("MMM-Coinbase", {
 
   start: function () {
     //Flag for check if module is loaded
-    this.loaded = false;
     this.BTCEUR = 0;
     this.BTCUSD = 0;
     this.BTCAccountPrice = 0;
@@ -97,9 +96,8 @@ Module.register("MMM-Coinbase", {
       case "DOM_OBJECTS_CREATED":
         setInterval(() => {
           this.sendSocketNotification("GET_ACCOUNTS", {
-            apiKey: this.config.apiKey,
-            apiSecret: this.config.apiSecret,
-            wallet: this.config.wallet,
+            BTCAccount: this.config.BTCAccount,
+            totalInvestissement: this.config.totalInvestissement,
           });
         }, 5000);
 
@@ -110,10 +108,13 @@ Module.register("MMM-Coinbase", {
   socketNotificationReceived: function (notification, payload) {
     switch (notification) {
       case "ACCOUNTS":
-        this.cryptoData = payload;
-        this.currency = payload[0].native_balance.currency;
+        this.BTCEUR = payload.BTCEUR;
+        this.BTCUSD = payload.BTCUSD;
+        this.BTCAccountPrice = payload.BTCAccountPrice;
+        this.balance = payload.balance;
+        this.labels = payload.labels;
+        this.data = payload.data;
         this.updateDom();
-        this.balance = 0;
 
         break;
     }

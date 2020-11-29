@@ -1,65 +1,58 @@
-/* Magic Mirror
- * Node Helper: next-train-transilien
- *
- * By
- * MIT Licensed.
- */
+const NodeHelper = require("node_helper");
 
-var NodeHelper = require("node_helper");
-const fs = require("fs");
-const cheerio = require("cheerio");
-const got = require("got");
+const currentPriceCoindesk = async () => {
+  const response = await fetch(
+    "https://api.coindesk.com/v1/bpi/currentprice.json"
+  );
+  const formatedResponse = await response.json();
+  const time = formatedResponse.time;
+  const chartName = formatedResponse.chartName;
+  const btcEUR = formatedResponse.bpi.EUR;
+  const btcUSD = formatedResponse.bpi.USD;
+  return { time, chartName, btcEUR, btcUSD };
+};
+
+const evolPriceCoindesk = async () => {
+  const response = await fetch(
+    "https://api.coindesk.com/v1/bpi/historical/close.json"
+  );
+  const formatedResponse = await response.json();
+  const time = formatedResponse.time;
+  const pricesDates = formatedResponse.bpi;
+  return { time, pricesDates };
+};
 
 module.exports = NodeHelper.create({
-  // Override socketNotificationReceived method.
+  start: () => {},
+  socketNotificationReceived: async function (
+    notification,
+    payload = { BTCAccount: 0.06555257, totalInvestissement: 800 }
+  ) {
+    switch (notification) {
+      case "GET_ACCOUNTS":
+        const { BTCAccount, totalInvestissement } = payload;
+        const currentPrice = await currentPriceCoindesk();
+        const evolPrices = await evolPriceCoindesk();
+        const BTCEUR = Math.round(currentPrice.btcEUR.rate_float);
+        const BTCUSD = Math.round(currentPrice.btcUSD.rate_float);
+        const BTCAccountPrice = BTCAccount * currentPrice.btcEUR.rate_float;
+        const balance = BTCAccountPrice - totalInvestissement;
 
-  /* socketNotificationReceived(notification, payload)
-   * This method is called when a socket notification arrives.
-   *
-   * argument notification string - The identifier of the noitication.
-   * argument payload mixed - The payload of the notification.
-   */
+        const labels = Object.keys(evolPrices.pricesDates).map((key) => key);
+        const data = Object.keys(evolPrices.pricesDates).map(
+          (key) => evolPrices.pricesDates[key]
+        );
 
-  // Test another function
+        helper.sendSocketNotification("ACCOUNTS", {
+          BTCEUR,
+          BTCUSD,
+          BTCAccountPrice,
+          balance,
+          labels,
+          data,
+        });
 
-  parseDom: function (dom) {
-    const $ = cheerio.load(dom);
-    const nbResult =
-      $(".class_trajet").length > 8 ? 8 : $(".class_trajet").length;
-    const response = [];
-    for (let i = 0; i < nbResult; i += 2) {
-      const heure = $(".class_trajet .panel-heading .col-xs-1")[i].children[1]
-        .children[0].data;
-
-      const mission = $(".class_trajet .panel-heading .code_train")[i / 2]
-        .children[1].children[0].data;
-      const icon =
-        "https://www.horaires-de-trains.fr/" +
-        $(".class_trajet .panel-heading .cod")[i / 2].attribs.src;
-      response.push({ heure, mission, icon });
-    }
-
-    return response;
-  },
-  anotherFunction: async function (payload) {
-    const response = await got(payload.defaultURL);
-    return this.parseDom(response.body);
-  },
-
-  socketNotificationReceived: async function (notification, payload) {
-    if (notification === "next-train-transilien-NOTIFICATION_TEST") {
-      console.log("payload: ", payload);
-      // Send notification
-      const result = await this.anotherFunction(payload);
-      this.sendNotificationTest(result); //Is possible send objects :)
+        break;
     }
   },
-
-  // Example function send notification test
-  sendNotificationTest: async function (payload) {
-    this.sendSocketNotification(
-      "next-train-transilien-NOTIFICATION_TEST",
-      payload
-    );
-  }
 });
