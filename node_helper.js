@@ -1,10 +1,9 @@
 const NodeHelper = require("node_helper");
-
+const axios = require('axios');
 const currentPriceCoindesk = async () => {
-  const response = await fetch(
-    "https://api.coindesk.com/v1/bpi/currentprice.json"
-  );
-  const formatedResponse = await response.json();
+  const response = await axios.get( "https://api.coindesk.com/v1/bpi/currentprice.json");
+
+  const formatedResponse =  response.data;
   const time = formatedResponse.time;
   const chartName = formatedResponse.chartName;
   const btcEUR = formatedResponse.bpi.EUR;
@@ -13,23 +12,23 @@ const currentPriceCoindesk = async () => {
 };
 
 const evolPriceCoindesk = async () => {
-  const response = await fetch(
-    "https://api.coindesk.com/v1/bpi/historical/close.json"
-  );
-  const formatedResponse = await response.json();
+  const response = await axios.get( "https://api.coindesk.com/v1/bpi/historical/close.json");
+  const formatedResponse =  response.data;
   const time = formatedResponse.time;
   const pricesDates = formatedResponse.bpi;
   return { time, pricesDates };
 };
 
 module.exports = NodeHelper.create({
-  start: () => {},
+  start: () => {console.log('start COJNS')},
   socketNotificationReceived: async function (
     notification,
-    payload = { BTCAccount: 0.06555257, totalInvestissement: 800 }
+    payload
   ) {
     switch (notification) {
-      case "GET_ACCOUNTS":
+      case "GET_COINS":
+        const helper = this;
+
         const { BTCAccount, totalInvestissement } = payload;
         const currentPrice = await currentPriceCoindesk();
         const evolPrices = await evolPriceCoindesk();
@@ -42,8 +41,7 @@ module.exports = NodeHelper.create({
         const data = Object.keys(evolPrices.pricesDates).map(
           (key) => evolPrices.pricesDates[key]
         );
-
-        helper.sendSocketNotification("ACCOUNTS", {
+        helper.sendSocketNotification("COINS", {
           BTCEUR,
           BTCUSD,
           BTCAccountPrice,

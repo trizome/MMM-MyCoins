@@ -9,27 +9,22 @@ body{
 }
 #list div span:first-child{
   font-weight : 700;
-  color:#666
+  color:#999
 }
 #list div span:last-child{
   font-weight : 400;
   color:#DDD
 }
 #balance{  font-weight : 700 !important;}
+.balance{  font-weight : 700 !important;}
 .good{
-  color : rgb(9, 255, 0) !important;
+  color : rgb(35, 214, 35) !important;
 }
 .bad{
-  color : red !important;
+  color : rgb(253, 116, 116) !important;
 }
 #mini{display : flex; border:1px solid black}
 .bar{
   width : 2px;
   height : 15px;
-}
-.negativ{
-  background:red;
-}
-.positiv{
-  background:green;
 }
